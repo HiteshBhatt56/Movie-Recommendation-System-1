@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Content-based movie recommendation system using TF-IDF and cosine similarity">
+<title>Movie Recommendation System</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;color:#172033;line-height:1.6}
+header{background:linear-gradient(135deg,#172033,#7c3aed);color:#fff;text-align:center;padding:70px 20px 90px}
+h1{font-size:clamp(2.2rem,6vw,4rem);line-height:1.1;margin:0 0 12px}header p{max-width:760px;margin:auto;color:#ede9fe}
+main{width:min(1050px,calc(100% - 32px));margin:-45px auto 50px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:28px;margin-bottom:24px;box-shadow:0 12px 30px rgba(15,23,42,.07)}
+.badge{display:inline-block;background:#ede9fe;color:#6d28d9;border-radius:999px;padding:5px 10px;margin:4px;font-size:.85rem;font-weight:700}
+.search{display:grid;grid-template-columns:1fr auto;gap:12px}input{padding:14px;border:1px solid #cbd5e1;border-radius:10px;font:inherit}button{padding:14px 22px;border:0;border-radius:10px;background:#7c3aed;color:#fff;font-weight:700;cursor:pointer}button:hover{background:#6d28d9}
+.movie{display:flex;justify-content:space-between;gap:15px;padding:16px 0;border-bottom:1px solid #e2e8f0}.movie:last-child{border-bottom:0}.title{font-weight:700}.genre{color:#64748b;font-size:.9rem}.score{color:#7c3aed;font-weight:700;white-space:nowrap}.note{color:#64748b;font-size:.92rem}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.stat{text-align:center;border:1px solid #e2e8f0;border-radius:12px;padding:18px}.stat strong{display:block;font-size:1.6rem;color:#7c3aed}
+footer{text-align:center;color:#64748b;padding:25px}
+@media(max-width:700px){.search,.grid{grid-template-columns:1fr}.movie{flex-direction:column}}
+</style>
+</head>
+<body>
+<header><h1>Movie Recommendation System</h1><p>Find movies similar to your favorites using content-based filtering, TF-IDF and cosine similarity.</p></header>
+<main>
+<section class="card"><h2>About the Project</h2><p>This educational recommendation system compares movie genres and descriptive features to identify movies with similar content.</p>
+<span class="badge">Python</span><span class="badge">Pandas</span><span class="badge">Scikit-learn</span><span class="badge">TF-IDF</span><span class="badge">Cosine Similarity</span></section>
+
+<section class="card"><h2>Try the Recommendation Demo</h2><p class="note">The GitHub Pages version runs the recommendation logic directly in the browser using the included demo dataset.</p>
+<div class="search"><input id="movie" list="movies" placeholder="Enter a movie, e.g. Inception"><datalist id="movies"></datalist><button onclick="recommend()">Recommend</button></div>
+<div id="results"></div></section>
+
+<section class="card"><h2>How It Works</h2><div class="grid"><div class="stat"><strong>1</strong>Movie metadata</div><div class="stat"><strong>2</strong>TF-IDF vectors</div><div class="stat"><strong>3</strong>Cosine similarity</div></div>
+<ol><li>Combine genres and descriptions into text features.</li><li>Convert the text into TF-IDF numerical vectors.</li><li>Measure similarity between movie vectors using cosine similarity.</li><li>Return the highest-scoring movies as recommendations.</li></ol></section>
+
+<section class="card"><h2>Run the Python Version</h2><p><code>pip install -r requirements.txt</code></p><p><code>python movie_recommender.py --movie "Inception"</code></p><p><code>python movie_recommender.py --list-movies</code></p><p class="note">For your own dataset, use a CSV containing at least <code>title</code> and <code>genres</code>. Optional columns: overview, cast and director.</p></section>
+
+<section class="card"><h2>Project Structure</h2><ul><li><code>movie_recommender.py</code> — Python recommendation engine</li><li><code>requirements.txt</code> — dependencies</li><li><code>index.html</code> — GitHub Pages interface</li><li><code>.github/workflows/deploy.yml</code> — automated Pages deployment</li></ul></section>
+
+<section class="card"><h2>Disclaimer</h2><p class="note">This is an educational project demonstrating recommendation algorithms. Recommendations are generated from available metadata and are not a measure of movie quality.</p></section>
+</main><footer>Movie Recommendation System · Content-Based Filtering</footer>
+
+<script>
+const data=[
+["The Dark Knight","Action Crime Drama Superhero Batman"],["Inception","Action Sci-Fi Thriller Mind-Bending"],["Interstellar","Adventure Drama Sci-Fi Space Exploration"],["Pulp Fiction","Crime Drama Thriller Cult Classic"],["The Matrix","Action Sci-Fi Cyberpunk Artificial Intelligence"],["Superbad","Comedy Teen High-School Friendship"],["The Hangover","Comedy Las Vegas Friendship Adventure"],["Se7en","Crime Drama Mystery Thriller Serial Killer"],["Avatar","Action Adventure Fantasy Sci-Fi Alien"],["Jurassic Park","Adventure Sci-Fi Thriller Dinosaurs"],["Star Wars","Action Adventure Fantasy Sci-Fi Space"],["The Lord of the Rings","Adventure Drama Fantasy Epic"],["Iron Man","Action Adventure Sci-Fi Superhero Technology"],["Avengers: Endgame","Action Adventure Drama Sci-Fi Superhero"],["Toy Story","Animation Adventure Comedy Family Friendship"],["Finding Nemo","Animation Adventure Comedy Family Ocean"],["Titanic","Drama Romance Historical"],["The Notebook","Drama Romance Love"],["La La Land","Comedy Drama Music Romance"],["The Shawshank Redemption","Drama Prison Friendship Hope"],["Forrest Gump","Drama Romance History"],["The Pursuit of Happyness","Biography Drama Family"],["Moneyball","Biography Drama Sport Baseball"],["Rocky","Drama Sport Boxing"],["Mad Max: Fury Road","Action Adventure Sci-Fi Thriller"],["John Wick","Action Crime Thriller Assassin"],["Get Out","Horror Mystery Thriller"],["A Quiet Place","Drama Horror Sci-Fi Thriller Family"]];
+const list=document.getElementById("movies");data.forEach(x=>{let o=document.createElement("option");o.value=x[0];list.appendChild(o)});
+function words(s){return new Set(s.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(Boolean))}
+function sim(a,b){let A=words(a),B=words(b),i=[...A].filter(x=>B.has(x)).length,u=new Set([...A,...B]).size;return u?i/u:0}
+function recommend(){let q=document.getElementById("movie").value.trim().toLowerCase(),r=document.getElementById("results");let i=data.findIndex(x=>x[0].toLowerCase()===q);if(i<0)i=data.findIndex(x=>x[0].toLowerCase().includes(q));if(i<0){r.innerHTML="<p class='note'>Movie not found. Choose a title from the suggestions.</p>";return}
+let ranked=data.filter((_,j)=>j!==i).map(x=>({t:x[0],g:x[1],s:sim(data[i][1],x[1])})).sort((a,b)=>b.s-a.s).slice(0,8);
+r.innerHTML="<h3>Recommendations for "+data[i][0]+"</h3>"+ranked.map((x,j)=>`<div class="movie"><div><div class="title">${j+1}. ${x.t}</div><div class="genre">${x.g}</div></div><div class="score">${Math.round(x.s*100)}% match</div></div>`).join("")}
+</script>
+</body></html>
